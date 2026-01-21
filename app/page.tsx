@@ -1,18 +1,34 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
-export default function Home() {
+export default function Page() {
   return (
     <main className="min-h-screen p-10">
-      <Card className="max-w-md">
-        <CardContent className="p-6 space-y-4">
-          <h1 className="text-2xl font-semibold">Shadcn is live</h1>
-          <p className="text-muted-foreground">
-            Next.js + Tailwind + shadcn is working.
-          </p>
-          <Button>Continue</Button>
-        </CardContent>
-      </Card>
+      <div className="mx-auto max-w-xl space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Dev Set Up Test
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              If you can see this card, button, and input styled nicely, shadcn is wired correctly.
+            </p>
+
+            <div className="flex gap-3">
+              <Input placeholder="Search products…" />
+              <Button>Search</Button>
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="default">Primary</Button>
+              <Button variant="secondary">Secondary</Button>
+              <Button variant="outline">Outline</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }
