@@ -195,22 +195,49 @@ export default function HomePage() {
     return pages.length ? pages : [promotionsDisplay]
   }, [promotionsDisplay])
 
+  const safeCategoryPageIndex = useMemo(() => {
+    if (!categoryPages.length) {
+      return 0
+    }
+
+    return Math.min(Math.max(categoryPageIndex, 0), categoryPages.length - 1)
+  }, [categoryPageIndex, categoryPages.length])
+
+  const safeOrderAgainPageIndex = useMemo(() => {
+    if (!orderAgainPages.length) {
+      return 0
+    }
+
+    return Math.min(
+      Math.max(orderAgainPageIndex, 0),
+      orderAgainPages.length - 1,
+    )
+  }, [orderAgainPageIndex, orderAgainPages.length])
+
+  const safePromotionsPageIndex = useMemo(() => {
+    if (!promotionsPages.length) {
+      return 0
+    }
+
+    return Math.min(
+      Math.max(promotionsPageIndex, 0),
+      promotionsPages.length - 1,
+    )
+  }, [promotionsPageIndex, promotionsPages.length])
+
   useEffect(() => {
-    setCategoryPageIndex(0)
     if (categoryScrollRef.current) {
       categoryScrollRef.current.scrollTo({ left: 0, behavior: "smooth" })
     }
   }, [categoryPages.length])
 
   useEffect(() => {
-    setOrderAgainPageIndex(0)
     if (orderAgainScrollRef.current) {
       orderAgainScrollRef.current.scrollTo({ left: 0, behavior: "smooth" })
     }
   }, [orderAgainPages.length])
 
   useEffect(() => {
-    setPromotionsPageIndex(0)
     if (promotionsScrollRef.current) {
       promotionsScrollRef.current.scrollTo({ left: 0, behavior: "smooth" })
     }
@@ -400,7 +427,7 @@ export default function HomePage() {
                 size="icon"
                 className="h-6 w-6 rounded-full disabled:opacity-40"
                 onClick={() => {
-                  const nextIndex = Math.max(categoryPageIndex - 1, 0)
+                  const nextIndex = Math.max(safeCategoryPageIndex - 1, 0)
                   const width = categoryScrollRef.current?.clientWidth ?? 0
                   categoryScrollRef.current?.scrollTo({
                     left: width * nextIndex,
@@ -408,7 +435,7 @@ export default function HomePage() {
                   })
                   setCategoryPageIndex(nextIndex)
                 }}
-                disabled={categoryPageIndex === 0}
+                disabled={safeCategoryPageIndex === 0}
                 aria-label="Scroll categories left"
               >
                 <ChevronLeft className="h-3 w-3" />
@@ -418,7 +445,7 @@ export default function HomePage() {
                   key={`category-dot-${index}`}
                   type="button"
                   aria-label={`Go to categories page ${index + 1}`}
-                  className={index === categoryPageIndex ? "h-1.5 w-1.5 rounded-full bg-foreground" : "h-1.5 w-1.5 rounded-full bg-muted"}
+                  className={index === safeCategoryPageIndex ? "h-1.5 w-1.5 rounded-full bg-foreground" : "h-1.5 w-1.5 rounded-full bg-muted"}
                   onClick={() => {
                     const width = categoryScrollRef.current?.clientWidth ?? 0
                     categoryScrollRef.current?.scrollTo({
@@ -435,7 +462,7 @@ export default function HomePage() {
                 size="icon"
                 className="h-6 w-6 rounded-full disabled:opacity-40"
                 onClick={() => {
-                  const nextIndex = Math.min(categoryPageIndex + 1, categoryPages.length - 1)
+                  const nextIndex = Math.min(safeCategoryPageIndex + 1, categoryPages.length - 1)
                   const width = categoryScrollRef.current?.clientWidth ?? 0
                   categoryScrollRef.current?.scrollTo({
                     left: width * nextIndex,
@@ -443,7 +470,7 @@ export default function HomePage() {
                   })
                   setCategoryPageIndex(nextIndex)
                 }}
-                disabled={categoryPageIndex >= categoryPages.length - 1}
+                disabled={safeCategoryPageIndex >= categoryPages.length - 1}
                 aria-label="Scroll categories right"
               >
                 <ChevronRight className="h-3 w-3" />
@@ -508,7 +535,7 @@ export default function HomePage() {
                 size="icon"
                 className="h-6 w-6 rounded-full disabled:opacity-40"
                 onClick={() => {
-                  const nextIndex = Math.max(orderAgainPageIndex - 1, 0)
+                  const nextIndex = Math.max(safeOrderAgainPageIndex - 1, 0)
                   const width = orderAgainScrollRef.current?.clientWidth ?? 0
                   orderAgainScrollRef.current?.scrollTo({
                     left: width * nextIndex,
@@ -516,7 +543,7 @@ export default function HomePage() {
                   })
                   setOrderAgainPageIndex(nextIndex)
                 }}
-                disabled={orderAgainPageIndex === 0}
+                disabled={safeOrderAgainPageIndex === 0}
                 aria-label="Scroll order again left"
               >
                 <ChevronLeft className="h-3 w-3" />
@@ -526,7 +553,7 @@ export default function HomePage() {
                   key={`order-again-dot-${index}`}
                   type="button"
                   aria-label={`Go to order again page ${index + 1}`}
-                  className={orderAgainPageIndex === index ? "h-1.5 w-1.5 rounded-full bg-foreground" : "h-1.5 w-1.5 rounded-full bg-muted"}
+                  className={safeOrderAgainPageIndex === index ? "h-1.5 w-1.5 rounded-full bg-foreground" : "h-1.5 w-1.5 rounded-full bg-muted"}
                   onClick={() => {
                     const width = orderAgainScrollRef.current?.clientWidth ?? 0
                     orderAgainScrollRef.current?.scrollTo({
@@ -544,7 +571,7 @@ export default function HomePage() {
                 className="h-6 w-6 rounded-full disabled:opacity-40"
                 onClick={() => {
                   const nextIndex = Math.min(
-                    orderAgainPageIndex + 1,
+                    safeOrderAgainPageIndex + 1,
                     orderAgainPages.length - 1,
                   )
                   const width = orderAgainScrollRef.current?.clientWidth ?? 0
@@ -554,7 +581,7 @@ export default function HomePage() {
                   })
                   setOrderAgainPageIndex(nextIndex)
                 }}
-                disabled={orderAgainPageIndex >= orderAgainPages.length - 1}
+                disabled={safeOrderAgainPageIndex >= orderAgainPages.length - 1}
                 aria-label="Scroll order again right"
               >
                 <ChevronRight className="h-3 w-3" />
@@ -622,7 +649,7 @@ export default function HomePage() {
                 size="icon"
                 className="h-6 w-6 rounded-full disabled:opacity-40"
                 onClick={() => {
-                  const nextIndex = Math.max(promotionsPageIndex - 1, 0)
+                  const nextIndex = Math.max(safePromotionsPageIndex - 1, 0)
                   const width = promotionsScrollRef.current?.clientWidth ?? 0
                   promotionsScrollRef.current?.scrollTo({
                     left: width * nextIndex,
@@ -630,7 +657,7 @@ export default function HomePage() {
                   })
                   setPromotionsPageIndex(nextIndex)
                 }}
-                disabled={promotionsPageIndex === 0}
+                disabled={safePromotionsPageIndex === 0}
                 aria-label="Scroll promotions left"
               >
                 <ChevronLeft className="h-3 w-3" />
@@ -640,7 +667,7 @@ export default function HomePage() {
                   key={`promotions-dot-${index}`}
                   type="button"
                   aria-label={`Go to promotions page ${index + 1}`}
-                  className={promotionsPageIndex === index ? "h-1.5 w-1.5 rounded-full bg-foreground" : "h-1.5 w-1.5 rounded-full bg-muted"}
+                  className={safePromotionsPageIndex === index ? "h-1.5 w-1.5 rounded-full bg-foreground" : "h-1.5 w-1.5 rounded-full bg-muted"}
                   onClick={() => {
                     const width = promotionsScrollRef.current?.clientWidth ?? 0
                     promotionsScrollRef.current?.scrollTo({
@@ -658,7 +685,7 @@ export default function HomePage() {
                 className="h-6 w-6 rounded-full disabled:opacity-40"
                 onClick={() => {
                   const nextIndex = Math.min(
-                    promotionsPageIndex + 1,
+                    safePromotionsPageIndex + 1,
                     promotionsPages.length - 1,
                   )
                   const width = promotionsScrollRef.current?.clientWidth ?? 0
@@ -668,7 +695,7 @@ export default function HomePage() {
                   })
                   setPromotionsPageIndex(nextIndex)
                 }}
-                disabled={promotionsPageIndex >= promotionsPages.length - 1}
+                disabled={safePromotionsPageIndex >= promotionsPages.length - 1}
                 aria-label="Scroll promotions right"
               >
                 <ChevronRight className="h-3 w-3" />
