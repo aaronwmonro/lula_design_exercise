@@ -36,7 +36,17 @@ export function CategoryButton({
         </Badge>
       )}
       <div className="flex h-8 w-8 items-center justify-center">{icon}</div>
-      <span className="text-xs font-medium leading-tight">{name}</span>
+      <span
+        className="text-center text-xs font-medium leading-tight whitespace-normal break-words"
+        style={{
+          display: "-webkit-box",
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical",
+          overflow: "hidden",
+        }}
+      >
+        {name.replace(/\band\b/gi, "&")}
+      </span>
     </Button>
   )
 }
