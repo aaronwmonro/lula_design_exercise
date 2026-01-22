@@ -27,7 +27,7 @@ export function ProductCard({
   return (
     <div
       className={cn(
-        "relative flex min-w-[140px] flex-col gap-2 rounded-lg border bg-card p-3",
+        "relative flex w-full flex-col gap-2 rounded-lg border bg-card p-3",
         className
       )}
     >
@@ -61,7 +61,7 @@ export function ProductCard({
 
       {/* Product Info */}
       <div className="flex flex-col gap-1">
-        <h3 className="line-clamp-2 text-sm font-medium leading-tight">
+        <h3 className="line-clamp-2 text-xs font-medium leading-tight">
           {name}
         </h3>
         {size && (

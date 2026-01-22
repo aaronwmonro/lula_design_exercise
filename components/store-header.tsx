@@ -21,6 +21,8 @@ interface StoreHeaderProps {
   deliveryTime?: string
   deliveryFee?: string
   cartItemCount?: number
+  isDrawerOpen?: boolean
+  onOpenChange?: (isOpen: boolean) => void
 }
 
 export function StoreHeader({
@@ -28,6 +30,8 @@ export function StoreHeader({
   deliveryTime = "15-20 min",
   deliveryFee = "$1.99 delivery",
   cartItemCount = 0,
+  isDrawerOpen: isDrawerOpenProp,
+  onOpenChange,
 }: StoreHeaderProps) {
   const stores = [
     {
@@ -45,8 +49,15 @@ export function StoreHeader({
       deliveryFeeTotal: "$2.49 delivery",
     },
   ]
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isDrawerOpenInternal, setIsDrawerOpenInternal] = useState(false)
   const [selectedStore, setSelectedStore] = useState(stores[0])
+  const isDrawerOpen = isDrawerOpenProp ?? isDrawerOpenInternal
+  const setDrawerOpen = (value: boolean) => {
+    if (isDrawerOpenProp === undefined) {
+      setIsDrawerOpenInternal(value)
+    }
+    onOpenChange?.(value)
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
@@ -66,7 +77,7 @@ export function StoreHeader({
           
             <button
               type="button"
-              onClick={() => setIsDrawerOpen(true)}
+              onClick={() => setDrawerOpen(true)}
               className="flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <span className="text-md font-semibold">{selectedStore.name}</span>
@@ -87,7 +98,7 @@ export function StoreHeader({
               type="button"
               aria-label="Close store selector"
               className="absolute inset-0 bg-black/25"
-              onClick={() => setIsDrawerOpen(false)}
+              onClick={() => setDrawerOpen(false)}
             />
             <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-background shadow-lg">
               <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
@@ -101,7 +112,7 @@ export function StoreHeader({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full"
-                  onClick={() => setIsDrawerOpen(false)}
+                  onClick={() => setDrawerOpen(false)}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -136,7 +147,7 @@ export function StoreHeader({
                         type="button"
                         onClick={() => {
                           setSelectedStore(store)
-                          setIsDrawerOpen(false)
+                          setDrawerOpen(false)
                         }}
                         className={cn(
                           "w-full rounded-2xl border p-4 text-left",
