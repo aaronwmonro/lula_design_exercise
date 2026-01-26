@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   Menu,
   ShoppingCart,
@@ -9,18 +9,21 @@ import {
   LocateFixed,
   Search,
   PenLine,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { NavigationDrawer } from "@/components/navigation-drawer";
 
 interface StoreHeaderProps {
-  storeName?: string
-  deliveryTime?: string
-  deliveryFee?: string
-  cartItemCount?: number
-  isDrawerOpen?: boolean
-  onOpenChange?: (isOpen: boolean) => void
+  storeName?: string;
+  deliveryTime?: string;
+  deliveryFee?: string;
+  cartItemCount?: number;
+  onCartClick?: () => void;
+  isDrawerOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+  categories?: Array<{ name: string }>;
 }
 
 export function StoreHeader({
@@ -28,8 +31,10 @@ export function StoreHeader({
   deliveryTime = "15-20 min",
   deliveryFee = "$1.99 delivery",
   cartItemCount = 0,
+  onCartClick,
   isDrawerOpen: isDrawerOpenProp,
   onOpenChange,
+  categories,
 }: StoreHeaderProps) {
   const stores = [
     {
@@ -46,22 +51,28 @@ export function StoreHeader({
       eta: "25-35 min",
       deliveryFeeTotal: "$2.49 delivery",
     },
-  ]
-  const [isDrawerOpenInternal, setIsDrawerOpenInternal] = useState(false)
-  const [selectedStore, setSelectedStore] = useState(stores[0])
-  const isDrawerOpen = isDrawerOpenProp ?? isDrawerOpenInternal
-  const setDrawerOpen = (value: boolean) => {
+  ];
+  const [isStoreDrawerOpenInternal, setIsStoreDrawerOpenInternal] = useState(false);
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  const [selectedStore, setSelectedStore] = useState(stores[0]);
+  const isStoreDrawerOpen = isDrawerOpenProp ?? isStoreDrawerOpenInternal;
+  const setStoreDrawerOpen = (value: boolean) => {
     if (isDrawerOpenProp === undefined) {
-      setIsDrawerOpenInternal(value)
+      setIsStoreDrawerOpenInternal(value);
     }
-    onOpenChange?.(value)
-  }
+    onOpenChange?.(value);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="flex items-center justify-between px-4 py-3 gap-3">
         {/* Left: Menu */}
-        <Button variant="outline" size="icon" className="h-10 w-10">
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="h-10 w-10"
+          onClick={() => setIsNavDrawerOpen(true)}
+        >
           <Menu className="h-8 w-8" />
         </Button>
 
@@ -72,31 +83,43 @@ export function StoreHeader({
             <span className="text-lg font-bold text-white">K</span>
           </div>
           <div className="flex flex-col items-start justify-center gap-0">
-          
             <button
               type="button"
-              onClick={() => setDrawerOpen(true)}
+              onClick={() => setStoreDrawerOpen(true)}
               className="flex items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <span className="text-md font-semibold">{selectedStore.name}</span>
+              <span className="text-md font-semibold">
+                {selectedStore.name}
+              </span>
               <PenLine className="h-4 w-4 text-muted-foreground" />
             </button>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{selectedStore.eta}</span>
-            <span>•</span>
-            <span>{selectedStore.deliveryFeeTotal}</span>
+              <span>{selectedStore.eta}</span>
+              <span>•</span>
+              <span>{selectedStore.deliveryFeeTotal}</span>
+            </div>
           </div>
-          </div>
-          
         </div>
 
-        {isDrawerOpen && (
+        {/* Navigation Drawer */}
+        <NavigationDrawer
+          isOpen={isNavDrawerOpen}
+          onClose={() => setIsNavDrawerOpen(false)}
+          storeName={storeName}
+          deliveryTime={deliveryTime}
+          deliveryFee={deliveryFee}
+          categories={categories}
+          onStoreClick={() => setStoreDrawerOpen(true)}
+        />
+
+        {/* Store Selector Drawer */}
+        {isStoreDrawerOpen && (
           <div className="fixed inset-0 z-50">
             <button
               type="button"
               aria-label="Close store selector"
               className="absolute inset-0 bg-black/25"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => setStoreDrawerOpen(false)}
             />
             <div className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-background shadow-lg">
               <div className="flex items-start justify-between gap-4 border-b px-5 py-4">
@@ -110,7 +133,7 @@ export function StoreHeader({
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 rounded-full"
-                  onClick={() => setDrawerOpen(false)}
+                  onClick={() => setStoreDrawerOpen(false)}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -138,18 +161,18 @@ export function StoreHeader({
 
                 <div className="space-y-3">
                   {stores.map((store) => {
-                    const isSelected = selectedStore.name === store.name
+                    const isSelected = selectedStore.name === store.name;
                     return (
                       <button
                         key={store.name}
                         type="button"
                         onClick={() => {
-                          setSelectedStore(store)
-                          setDrawerOpen(false)
+                          setSelectedStore(store);
+                          setStoreDrawerOpen(false);
                         }}
                         className={cn(
-                          "w-full rounded-2xl border p-4 text-left",
-                          isSelected ? "border-foreground" : "border-border"
+                          "w-full rounded-md border p-4 text-left",
+                          isSelected ? "border-foreground" : "border-border",
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
@@ -176,7 +199,7 @@ export function StoreHeader({
                           <span>{store.deliveryFeeTotal}</span>
                         </div>
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -185,15 +208,21 @@ export function StoreHeader({
         )}
 
         {/* Right: Cart */}
-        <Button variant="ghost" size="icon" className="relative h-10 w-10">
+        <Button
+          variant="outline"
+          size="icon"
+          className="relative h-10 w-10"
+          onClick={onCartClick}
+          aria-label={cartItemCount > 0 ? `Cart, ${cartItemCount} items` : "Cart"}
+        >
           <ShoppingCart className="h-6 w-6" />
           {cartItemCount > 0 && (
-            <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+            <span className="absolute left-[30px] top-[-6px] flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
               {cartItemCount}
             </span>
           )}
         </Button>
       </div>
     </header>
-  )
+  );
 }
