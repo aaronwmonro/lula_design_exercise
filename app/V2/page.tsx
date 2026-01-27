@@ -16,13 +16,17 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
+  Wallet,
+  Gift,
 } from "lucide-react";
 import { StoreHeader } from "@/components/store-header";
 import { CategoryButton } from "@/components/category-button";
 import { ProductCard } from "@/components/product-card";
 import { CartDrawer, type CartItem } from "@/components/cart-drawer";
-import { ItemModal, type ItemModalProduct } from "@/components/item-modal";
-import { Input } from "@/components/ui/input";
+import {
+  ItemModalV2,
+  type ItemModalV2Product,
+} from "@/components/item-modal-v2";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 
@@ -39,6 +43,41 @@ type OrderAgainProduct = {
   price: number | null;
   imageUrl?: string;
 };
+
+type PromoDeal = {
+  title: string;
+  copy: string;
+  cta: string;
+  imageUrl: string;
+  backgroundClass: string;
+};
+
+const promoDeals: PromoDeal[] = [
+  {
+    title: "We got the restaurants you want",
+    copy: "When those cravings hit, you know what to do.",
+    cta: "Order now",
+    imageUrl:
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80",
+    backgroundClass: "bg-gradient-to-r from-orange-600 to-orange-500",
+  },
+  {
+    title: "Snack time, solved",
+    copy: "Save 20% on chips, candy, and cold drinks.",
+    cta: "Shop snacks",
+    imageUrl:
+      "https://images.unsplash.com/photo-1481391032119-d89fee407e44?auto=format&fit=crop&w=300&q=80",
+    backgroundClass: "bg-gradient-to-r from-purple-600 to-pink-500",
+  },
+  {
+    title: "Weekend essentials",
+    copy: "Fuel up with bundles made for game day.",
+    cta: "See bundles",
+    imageUrl:
+      "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=300&q=80",
+    backgroundClass: "bg-gradient-to-r from-emerald-600 to-teal-500",
+  },
+];
 
 const getCategoryIcon = (name: string, size: "card" | "copy") => {
   const className = size === "card" ? "h-6 w-6" : "h-4 w-4";
@@ -142,14 +181,16 @@ export default function HomePage() {
   const orderAgainScrollRef = useRef<HTMLDivElement | null>(null);
   const [promotionsPageIndex, setPromotionsPageIndex] = useState(0);
   const promotionsScrollRef = useRef<HTMLDivElement | null>(null);
+  const [promoDealPageIndex, setPromoDealPageIndex] = useState(0);
+  const promoDealScrollRef = useRef<HTMLDivElement | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] =
-    useState<ItemModalProduct | null>(null);
+    useState<ItemModalV2Product | null>(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
 
   const categoryPages = useMemo(() => {
-    const pageSize = 9;
+    const pageSize = 8;
     const pages: CategoryItem[][] = [];
 
     for (let i = 0; i < categoryItems.length; i += pageSize) {
@@ -204,7 +245,7 @@ export default function HomePage() {
     return pages.length ? pages : [promotionsDisplay];
   }, [promotionsDisplay]);
 
-  const modalRelatedItems = useMemo<ItemModalProduct[]>(
+  const modalRelatedItems = useMemo<ItemModalV2Product[]>(
     () =>
       orderAgainProducts.map((item) => ({
         id: item.id,
@@ -216,7 +257,7 @@ export default function HomePage() {
     [orderAgainProducts],
   );
 
-  const modalPromotionItems = useMemo<ItemModalProduct[]>(
+  const modalPromotionItems = useMemo<ItemModalV2Product[]>(
     () =>
       promotionsDisplay.map((item) => ({
         id: item.id,
@@ -258,6 +299,14 @@ export default function HomePage() {
       promotionsPages.length - 1,
     );
   }, [promotionsPageIndex, promotionsPages.length]);
+
+  const safePromoDealPageIndex = useMemo(() => {
+    if (!promoDeals.length) {
+      return 0;
+    }
+
+    return Math.min(Math.max(promoDealPageIndex, 0), promoDeals.length - 1);
+  }, [promoDealPageIndex]);
 
   const addToCart = (
     product: OrderAgainProduct,
@@ -301,7 +350,7 @@ export default function HomePage() {
   };
 
   const handleAddToCartFromModal = (
-    product: ItemModalProduct,
+    product: ItemModalV2Product,
     quantity: number,
   ) => {
     setCart((prev) => {
@@ -359,6 +408,12 @@ export default function HomePage() {
       promotionsScrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
     }
   }, [promotionsPages.length]);
+
+  useEffect(() => {
+    if (promoDealScrollRef.current) {
+      promoDealScrollRef.current.scrollTo({ left: 0, behavior: "smooth" });
+    }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -503,7 +558,7 @@ export default function HomePage() {
         }}
       />
 
-      <ItemModal
+      <ItemModalV2
         isOpen={isItemModalOpen}
         onClose={() => {
           setIsItemModalOpen(false);
@@ -513,54 +568,403 @@ export default function HomePage() {
         onAddToCart={handleAddToCartFromModal}
         relatedItems={modalRelatedItems}
         promotionItems={modalPromotionItems}
-        onSelectProduct={(nextProduct) => {
-          setSelectedProduct(nextProduct);
+        onSelectProduct={(product) => {
+          setSelectedProduct(product);
           setIsItemModalOpen(true);
         }}
       />
 
       <main className="flex-1 overflow-visible gap-6">
-        <section className="overflow-visible border-b bg-gradient-to-r from-red-700 to-orange-600 px-4 pb-6 pt-4 text-white">
+        <section className="overflow-visible px-4 pt-4 pb-4 border-b">
           {/* What are you looking for? Section */}
-          <div className="flex flex-col">
-            <p className="text-sm text-white/80">Good Morning, Aaron!</p>
-            <h1 className="mb-4 text-xl font-bold text-white">
-              What are you looking for?
-            </h1>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative">
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="h-12 bg-background pr-12 text-base text-foreground placeholder:text-muted-foreground"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2"
-            >
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-base text-muted-foreground">
+              Good Morning, Aaron!
+            </p>
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
               <Search className="h-5 w-5" />
             </Button>
           </div>
-        </section>
 
-        <section className="overflow-visible border-b px-4 pb-4 pt-4">
-          <div className="flex flex-col gap-3 overflow-visible">
-            {/* Category Grid */}
-            <div className="overflow-visible">
-              <div className=" pb-2 flex w-full items-center justify-between">
-                <h2 className="text-sm font-bold">Categories</h2>
+          {/* Loyalty Rewards Tracker */}
+          <div className="rounded-xl bg-white p-4 shadow-sm border">
+            {/* Rewards Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Gift className="h-5 w-5 text-red-500" />
+                <span className="text-base font-bold">
+                  <span className="text-red-500">LULA</span>{" "}
+                  <span className="text-green-600">REWARDS</span>
+                </span>
+              </div>
+              <span className="text-base font-bold">300 pts</span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="relative w-full mb-6">
+                {/* Progress bar track */}
+                <div className="relative w-full h-1 bg-gray-200 rounded-full">
+                  {/* Progress fill */}
+                  <div
+                    className="absolute left-0 top-0 h-full bg-green-500 rounded-full"
+                    style={{ width: "6%" }}
+                  />
+                  {/* Dots/markers */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full flex justify-between">
+                    <div className="h-2 w-2 rounded-full bg-gray-400" />
+                    <div className="h-2 w-2 rounded-full bg-gray-400" />
+                    <div className="h-2 w-2 rounded-full bg-gray-400" />
+                  </div>
+                </div>
+                {/* Labels below progress bar */}
+                <div className="absolute left-0 top-3 flex w-full justify-between mt-1">
+                  <span className="text-xs text-gray-500">0</span>
+                  <span className="text-xs text-gray-500">500</span>
+                  <span className="text-xs text-gray-500">5000+</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-4 mt-10">
+                <p className="text-xs text-gray-600">
+                  Only 200 points away to unlock new rewards
+                </p>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 rounded-full disabled:opacity-40"
+                  variant="default"
+                  size="sm"
+                  className="h-8 rounded-md bg-black text-white hover:bg-gray-800 px-4"
                 >
-                  <ChevronRight className="h-3 w-3" />
+                  View Deals
                 </Button>
               </div>
+            </div>
 
+            {/* Separator */}
+            <div className="border-t border-gray-200 my-4" />
+
+            {/* Wallet Section */}
+            <button
+              type="button"
+              className="flex items-center justify-between w-full"
+            >
+              <div className="flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-gray-700" />
+                <span className="text-sm font-medium">Lula Wallet</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">$1.00</span>
+                <ChevronRight className="h-4 w-4 text-gray-500" />
+              </div>
+            </button>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 overflow-visible">
+            <div className="pb-0 flex w-full items-center justify-between">
+              <h2 className="text-sm font-bold">Promotions</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full disabled:opacity-40"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+
+            <div className="overflow-visible">
+              <div
+                ref={promoDealScrollRef}
+                className="flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-visible scrollbar-hide"
+                onScroll={(event) => {
+                  const target = event.currentTarget;
+                  const width = target.clientWidth || 1;
+                  const nextIndex = Math.round(target.scrollLeft / width);
+
+                  setPromoDealPageIndex(
+                    Math.min(Math.max(nextIndex, 0), promoDeals.length - 1),
+                  );
+                }}
+              >
+                {promoDeals.map((deal, index) => (
+                  <div
+                    key={`${deal.title}-${index}`}
+                    className={`min-w-full snap-start overflow-hidden rounded-xl ${deal.backgroundClass}`}
+                  >
+                    <div className="flex items-center gap-4 p-4 text-white">
+                      <div className="flex flex-1 flex-col gap-2">
+                        <p className="text-lg font-semibold leading-tight">
+                          {deal.title}
+                        </p>
+                        <p className="text-sm text-white/90">{deal.copy}</p>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-8 w-fit rounded-md bg-white px-4 text-sm text-slate-900 hover:bg-white/90"
+                        >
+                          {deal.cta}
+                        </Button>
+                      </div>
+                      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-white/15">
+                        <Image
+                          src={deal.imageUrl}
+                          alt={deal.title}
+                          fill
+                          className="object-cover"
+                          sizes="96px"
+                          unoptimized
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full disabled:opacity-40"
+                onClick={() => {
+                  const nextIndex = Math.max(safePromoDealPageIndex - 1, 0);
+                  const width = promoDealScrollRef.current?.clientWidth ?? 0;
+                  promoDealScrollRef.current?.scrollTo({
+                    left: width * nextIndex,
+                    behavior: "smooth",
+                  });
+                  setPromoDealPageIndex(nextIndex);
+                }}
+                disabled={safePromoDealPageIndex === 0}
+                aria-label="Scroll promotions left"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </Button>
+              {promoDeals.map((_, index) => (
+                <button
+                  key={`promo-deal-dot-${index}`}
+                  type="button"
+                  aria-label={`Go to promotions page ${index + 1}`}
+                  className={
+                    safePromoDealPageIndex === index
+                      ? "h-1.5 w-1.5 rounded-full bg-foreground"
+                      : "h-1.5 w-1.5 rounded-full bg-muted"
+                  }
+                  onClick={() => {
+                    const width = promoDealScrollRef.current?.clientWidth ?? 0;
+                    promoDealScrollRef.current?.scrollTo({
+                      left: width * index,
+                      behavior: "smooth",
+                    });
+                    setPromoDealPageIndex(index);
+                  }}
+                />
+              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full disabled:opacity-40"
+                onClick={() => {
+                  const nextIndex = Math.min(
+                    safePromoDealPageIndex + 1,
+                    promoDeals.length - 1,
+                  );
+                  const width = promoDealScrollRef.current?.clientWidth ?? 0;
+                  promoDealScrollRef.current?.scrollTo({
+                    left: width * nextIndex,
+                    behavior: "smooth",
+                  });
+                  setPromoDealPageIndex(nextIndex);
+                }}
+                disabled={safePromoDealPageIndex >= promoDeals.length - 1}
+                aria-label="Scroll promotions right"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="pt-4  border-b  pb-4 px-4">
+          <div className="mb-2 flex w-full items-center justify-between">
+            <h2 className="text-sm font-bold">Item Deals</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full disabled:opacity-40"
+            >
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-3 overflow-visible">
+            <div className="overflow-visible">
+              <div
+                ref={promotionsScrollRef}
+                className="flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-visible scrollbar-hide"
+                onScroll={(event) => {
+                  const target = event.currentTarget;
+                  const width = target.clientWidth || 1;
+                  const nextIndex = Math.round(target.scrollLeft / width);
+
+                  setPromotionsPageIndex(
+                    Math.min(
+                      Math.max(nextIndex, 0),
+                      promotionsPages.length - 1,
+                    ),
+                  );
+                }}
+              >
+                {showProductSkeletons ? (
+                  <div className="grid min-w-full snap-start grid-cols-3 grid-rows-1 gap-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div
+                        key={`promotions-skeleton-${index}`}
+                        className="relative flex w-full flex-col gap-2 rounded-lg border bg-card p-3 animate-pulse"
+                      >
+                        <div className="absolute right-2 top-2 h-8 w-8 rounded-md bg-muted" />
+                        <div className="aspect-square w-full rounded-md bg-muted" />
+                        <div className="flex flex-col gap-2">
+                          <div className="h-3 w-4/5 rounded bg-muted" />
+                          <div className="h-3 w-1/2 rounded bg-muted" />
+                          <div className="h-4 w-1/3 rounded bg-muted" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  promotionsPages.map((page, pageIndex) => (
+                    <div
+                      key={`promotions-page-${pageIndex}`}
+                      className="grid min-w-full snap-start grid-cols-3 grid-rows-1 gap-3"
+                    >
+                      {page.map((product, index) => (
+                        <ProductCard
+                          key={product.id ?? index}
+                          name={product.name}
+                          size={product.size ?? undefined}
+                          price={formatPrice(product.price)}
+                          originalPrice={
+                            product.price != null
+                              ? formatPrice(product.price + 1.5)
+                              : undefined
+                          }
+                          imageUrl={product.imageUrl}
+                          onAdd={() =>
+                            addToCart(
+                              product,
+                              product.price != null
+                                ? product.price + 1.5
+                                : undefined,
+                            )
+                          }
+                          onClick={() =>
+                            handleProductClick(
+                              product,
+                              product.price != null
+                                ? product.price + 1.5
+                                : undefined,
+                            )
+                          }
+                        />
+                      ))}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full disabled:opacity-40"
+                onClick={() => {
+                  const nextIndex = Math.max(safePromotionsPageIndex - 1, 0);
+                  const width = promotionsScrollRef.current?.clientWidth ?? 0;
+                  promotionsScrollRef.current?.scrollTo({
+                    left: width * nextIndex,
+                    behavior: "smooth",
+                  });
+                  setPromotionsPageIndex(nextIndex);
+                }}
+                disabled={showProductSkeletons || safePromotionsPageIndex === 0}
+                aria-label="Scroll promotions left"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </Button>
+              {showProductSkeletons
+                ? Array.from({ length: 3 }).map((_, index) => (
+                    <span
+                      key={`promotions-dot-skeleton-${index}`}
+                      className="h-1.5 w-1.5 rounded-full bg-muted animate-pulse"
+                    />
+                  ))
+                : promotionsPages.map((_, index) => (
+                    <button
+                      key={`promotions-dot-${index}`}
+                      type="button"
+                      aria-label={`Go to promotions page ${index + 1}`}
+                      className={
+                        safePromotionsPageIndex === index
+                          ? "h-1.5 w-1.5 rounded-full bg-foreground"
+                          : "h-1.5 w-1.5 rounded-full bg-muted"
+                      }
+                      onClick={() => {
+                        const width =
+                          promotionsScrollRef.current?.clientWidth ?? 0;
+                        promotionsScrollRef.current?.scrollTo({
+                          left: width * index,
+                          behavior: "smooth",
+                        });
+                        setPromotionsPageIndex(index);
+                      }}
+                    />
+                  ))}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 rounded-full disabled:opacity-40"
+                onClick={() => {
+                  const nextIndex = Math.min(
+                    safePromotionsPageIndex + 1,
+                    promotionsPages.length - 1,
+                  );
+                  const width = promotionsScrollRef.current?.clientWidth ?? 0;
+                  promotionsScrollRef.current?.scrollTo({
+                    left: width * nextIndex,
+                    behavior: "smooth",
+                  });
+                  setPromotionsPageIndex(nextIndex);
+                }}
+                disabled={
+                  showProductSkeletons ||
+                  safePromotionsPageIndex >= promotionsPages.length - 1
+                }
+                aria-label="Scroll promotions right"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Categories Section */}
+        <section className="pt-4 pb-4 border-b px-4">
+          <div className="pb-2 flex w-full items-center justify-between">
+            <h2 className="text-sm font-bold">Categories</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full disabled:opacity-40"
+            >
+              <ChevronRight className="h-3 w-3" />
+            </Button>
+          </div>
+
+          <div className="flex flex-col gap-3 overflow-visible">
+            <div className="overflow-visible">
               <div
                 ref={categoryScrollRef}
                 className="flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-visible scrollbar-hide"
@@ -575,15 +979,14 @@ export default function HomePage() {
                 }}
               >
                 {showCategorySkeletons ? (
-                  <div className="grid min-w-full snap-start grid-cols-3 grid-rows-3 overflow-y-visible gap-3">
-                    {Array.from({ length: 9 }).map((_, index) => (
+                  <div className="grid min-w-full snap-start grid-cols-2 grid-rows-4 overflow-y-visible gap-3">
+                    {Array.from({ length: 8 }).map((_, index) => (
                       <div
                         key={`category-skeleton-${index}`}
-                        className="flex h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border bg-card p-3 animate-pulse"
+                        className="flex h-12 w-full flex-row items-center justify-start gap-2 rounded-lg border bg-card p-3 animate-pulse"
                       >
-                        <div className="h-8 w-8 rounded-full bg-muted" />
-                        <div className="h-3 w-16 rounded bg-muted" />
-                        <div className="h-3 w-10 rounded bg-muted" />
+                        <div className="h-6 w-6 shrink-0 rounded-full bg-muted" />
+                        <div className="h-3 flex-1 rounded bg-muted" />
                       </div>
                     ))}
                   </div>
@@ -591,7 +994,7 @@ export default function HomePage() {
                   categoryPages.map((page, pageIndex) => (
                     <div
                       key={`category-page-${pageIndex}`}
-                      className="grid min-w-full snap-start grid-cols-3 grid-rows-3 overflow-y-visible gap-3"
+                      className="grid min-w-full snap-start grid-cols-2 grid-rows-4 overflow-y-visible gap-3"
                     >
                       {page.map((category) => (
                         <CategoryButton
@@ -599,6 +1002,7 @@ export default function HomePage() {
                           name={category.name}
                           icon={category.icon}
                           ageRestricted={category.ageRestricted}
+                          layout="horizontal"
                         />
                       ))}
                     </div>
@@ -607,7 +1011,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Pagination Dots */}
             <div className="flex items-center justify-center gap-2">
               <Button
                 type="button"
@@ -827,172 +1230,6 @@ export default function HomePage() {
                   safeOrderAgainPageIndex >= orderAgainPages.length - 1
                 }
                 aria-label="Scroll order again right"
-              >
-                <ChevronRight className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-        </section>
-
-        <section className="pt-4  border-b  pb-4 px-4">
-          <div className="mb-2 flex w-full items-center justify-between">
-            <h2 className="text-sm font-bold">Item Deals</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 rounded-full disabled:opacity-40"
-            >
-              <ChevronRight className="h-3 w-3" />
-            </Button>
-          </div>
-
-          <div className="flex flex-col gap-3 overflow-visible">
-            <div className="overflow-visible">
-              <div
-                ref={promotionsScrollRef}
-                className="flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-visible scrollbar-hide"
-                onScroll={(event) => {
-                  const target = event.currentTarget;
-                  const width = target.clientWidth || 1;
-                  const nextIndex = Math.round(target.scrollLeft / width);
-
-                  setPromotionsPageIndex(
-                    Math.min(
-                      Math.max(nextIndex, 0),
-                      promotionsPages.length - 1,
-                    ),
-                  );
-                }}
-              >
-                {showProductSkeletons ? (
-                  <div className="grid min-w-full snap-start grid-cols-3 grid-rows-1 gap-3">
-                    {Array.from({ length: 3 }).map((_, index) => (
-                      <div
-                        key={`promotions-skeleton-${index}`}
-                        className="relative flex w-full flex-col gap-2 rounded-lg border bg-card p-3 animate-pulse"
-                      >
-                        <div className="absolute right-2 top-2 h-8 w-8 rounded-md bg-muted" />
-                        <div className="aspect-square w-full rounded-md bg-muted" />
-                        <div className="flex flex-col gap-2">
-                          <div className="h-3 w-4/5 rounded bg-muted" />
-                          <div className="h-3 w-1/2 rounded bg-muted" />
-                          <div className="h-4 w-1/3 rounded bg-muted" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  promotionsPages.map((page, pageIndex) => (
-                    <div
-                      key={`promotions-page-${pageIndex}`}
-                      className="grid min-w-full snap-start grid-cols-3 grid-rows-1 gap-3"
-                    >
-                      {page.map((product, index) => (
-                        <ProductCard
-                          key={product.id ?? index}
-                          name={product.name}
-                          size={product.size ?? undefined}
-                          price={formatPrice(product.price)}
-                          originalPrice={
-                            product.price != null
-                              ? formatPrice(product.price + 1.5)
-                              : undefined
-                          }
-                          imageUrl={product.imageUrl}
-                          onAdd={() =>
-                            addToCart(
-                              product,
-                              product.price != null
-                                ? product.price + 1.5
-                                : undefined,
-                            )
-                          }
-                          onClick={() =>
-                            handleProductClick(
-                              product,
-                              product.price != null
-                                ? product.price + 1.5
-                                : undefined,
-                            )
-                          }
-                        />
-                      ))}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 rounded-full disabled:opacity-40"
-                onClick={() => {
-                  const nextIndex = Math.max(safePromotionsPageIndex - 1, 0);
-                  const width = promotionsScrollRef.current?.clientWidth ?? 0;
-                  promotionsScrollRef.current?.scrollTo({
-                    left: width * nextIndex,
-                    behavior: "smooth",
-                  });
-                  setPromotionsPageIndex(nextIndex);
-                }}
-                disabled={showProductSkeletons || safePromotionsPageIndex === 0}
-                aria-label="Scroll promotions left"
-              >
-                <ChevronLeft className="h-3 w-3" />
-              </Button>
-              {showProductSkeletons
-                ? Array.from({ length: 3 }).map((_, index) => (
-                    <span
-                      key={`promotions-dot-skeleton-${index}`}
-                      className="h-1.5 w-1.5 rounded-full bg-muted animate-pulse"
-                    />
-                  ))
-                : promotionsPages.map((_, index) => (
-                    <button
-                      key={`promotions-dot-${index}`}
-                      type="button"
-                      aria-label={`Go to promotions page ${index + 1}`}
-                      className={
-                        safePromotionsPageIndex === index
-                          ? "h-1.5 w-1.5 rounded-full bg-foreground"
-                          : "h-1.5 w-1.5 rounded-full bg-muted"
-                      }
-                      onClick={() => {
-                        const width =
-                          promotionsScrollRef.current?.clientWidth ?? 0;
-                        promotionsScrollRef.current?.scrollTo({
-                          left: width * index,
-                          behavior: "smooth",
-                        });
-                        setPromotionsPageIndex(index);
-                      }}
-                    />
-                  ))}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 rounded-full disabled:opacity-40"
-                onClick={() => {
-                  const nextIndex = Math.min(
-                    safePromotionsPageIndex + 1,
-                    promotionsPages.length - 1,
-                  );
-                  const width = promotionsScrollRef.current?.clientWidth ?? 0;
-                  promotionsScrollRef.current?.scrollTo({
-                    left: width * nextIndex,
-                    behavior: "smooth",
-                  });
-                  setPromotionsPageIndex(nextIndex);
-                }}
-                disabled={
-                  showProductSkeletons ||
-                  safePromotionsPageIndex >= promotionsPages.length - 1
-                }
-                aria-label="Scroll promotions right"
               >
                 <ChevronRight className="h-3 w-3" />
               </Button>

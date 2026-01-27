@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/product-card";
 
-export type ItemModalProduct = {
+export type ItemModalV2Product = {
   id: string;
   name: string;
   size?: string | null;
@@ -57,7 +57,7 @@ function getSizeMeasurement(
   return { value, unitLabel };
 }
 
-const getProductDetails = (product: ItemModalProduct) => {
+const getProductDetails = (product: ItemModalV2Product) => {
   const normalizedName = product.name.toLowerCase();
   const sizeLabel = product.size ?? "N/A";
   const isWater = normalizedName.includes("water");
@@ -107,18 +107,18 @@ const getProductDetails = (product: ItemModalProduct) => {
   };
 };
 
-interface ItemModalProps {
+interface ItemModalV2Props {
   isOpen: boolean;
   onClose: () => void;
-  product: ItemModalProduct | null;
-  onAddToCart: (product: ItemModalProduct, quantity: number) => void;
+  product: ItemModalV2Product | null;
+  onAddToCart: (product: ItemModalV2Product, quantity: number) => void;
   initialQuantity?: number;
-  relatedItems?: ItemModalProduct[];
-  promotionItems?: ItemModalProduct[];
-  onSelectProduct?: (product: ItemModalProduct) => void;
+  relatedItems?: ItemModalV2Product[];
+  promotionItems?: ItemModalV2Product[];
+  onSelectProduct?: (product: ItemModalV2Product) => void;
 }
 
-export function ItemModal({
+export function ItemModalV2({
   isOpen,
   onClose,
   product,
@@ -127,7 +127,7 @@ export function ItemModal({
   relatedItems = [],
   promotionItems = [],
   onSelectProduct,
-}: ItemModalProps) {
+}: ItemModalV2Props) {
   const [quantity, setQuantity] = useState(initialQuantity);
   const [relatedPageIndex, setRelatedPageIndex] = useState(0);
   const [promotionsPageIndex, setPromotionsPageIndex] = useState(0);
@@ -197,14 +197,14 @@ export function ItemModal({
 
   const pageSize = 3;
   const relatedPages = useMemo(() => {
-    const pages: ItemModalProduct[][] = [];
+    const pages: ItemModalV2Product[][] = [];
     for (let i = 0; i < relatedDisplay.length; i += pageSize) {
       pages.push(relatedDisplay.slice(i, i + pageSize));
     }
     return pages;
   }, [relatedDisplay]);
   const promotionsPages = useMemo(() => {
-    const pages: ItemModalProduct[][] = [];
+    const pages: ItemModalV2Product[][] = [];
     for (let i = 0; i < promotionsDisplay.length; i += pageSize) {
       pages.push(promotionsDisplay.slice(i, i + pageSize));
     }
@@ -241,6 +241,9 @@ export function ItemModal({
     { quantity: 12, discount: 0.1 },
     { quantity: 24, discount: 0.15 },
   ];
+  const maxUpgradeDiscount = Math.max(
+    ...upgradeOptions.map((entry) => entry.discount),
+  );
 
   return (
     <>
@@ -270,9 +273,9 @@ export function ItemModal({
             </Button>
           </div>
           {/* Product Image */}
-          <div className="relative aspect-square w-full bg-white overflow-hidden flex items-center justify-center">
+          <div className="relative w-full bg-white overflow-hidden flex items-center justify-center py-6">
             {product.imageUrl ? (
-              <div className="relative w-4/5 aspect-square">
+              <div className="relative w-2/5 aspect-square">
                 <Image
                   src={product.imageUrl}
                   alt={product.name}
@@ -329,6 +332,7 @@ export function ItemModal({
                     : 0;
                   const savingsPerItem = basePrice - perItem;
                   const isSelected = quantity === option.quantity;
+                  const isBestDiscount = option.discount === maxUpgradeDiscount;
 
                   return (
                     <button
@@ -348,7 +352,13 @@ export function ItemModal({
                             {option.quantity} pack
                           </p>
                         </div>
-                        <span className="rounded-full bg-foreground/5 px-2 py-1 text-[11px] font-semibold text-foreground">
+                        <span
+                          className={`rounded-full px-2 py-1 text-[11px] font-semibold ${
+                            isBestDiscount
+                              ? "bg-red-500 text-white"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
                           -{Math.round(option.discount * 100)}%
                         </span>
                       </div>
@@ -366,6 +376,27 @@ export function ItemModal({
               </div>
             </div>
 
+            {/* Bundle Deal */}
+            <div className="px-4 pb-4 pt-4 mb-0">
+              <div className="rounded-[6px] bg-gradient-to-r from-red-500 to-orange-500 p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Bundle & Save</p>
+                    <p className="text-xs text-white/90">
+                      Pair this item with a snack and save 15%.
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-8 bg-white text-red-600 hover:bg-white/90"
+                  >
+                    Build Bundle
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             {/* Description */}
             {product.description && (
               <div className="space-y-2">
@@ -375,54 +406,6 @@ export function ItemModal({
                 </p>
               </div>
             )}
-
-            {/* Additional Details */}
-            <div className="space-y-4 p-4 mb-0">
-              <h4 className="text-base font-semibold">Item Details</h4>
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Calories</h4>
-                <p className="text-sm text-muted-foreground">
-                  {details.calories}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Description</h4>
-                <p className="text-sm text-muted-foreground">
-                  {details.detailDescription}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Ingredients</h4>
-                <ul className="space-y-1 text-sm text-muted-foreground">
-                  {details.ingredients.map((ingredient) => (
-                    <li key={ingredient}>{ingredient}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Features</h4>
-                <ul className="space-y-1 text-sm text-muted-foreground">
-                  {details.features.map((feature) => (
-                    <li key={feature}>{feature}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Specifics</h4>
-                <div className="grid gap-2 text-sm text-muted-foreground">
-                  {details.itemDetails.map((detail) => (
-                    <div key={detail.label} className="flex justify-between">
-                      <span>{detail.label}</span>
-                      <span className="text-foreground">{detail.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
 
             <section className="border-t px-4 py-4 mb-0">
               <div className="pb-2 flex w-full items-center justify-between">
@@ -542,7 +525,7 @@ export function ItemModal({
               )}
             </section>
 
-            <section className="border-t px-4 py-4">
+            <section className="border-t border-b px-4 py-4">
               <div className="pb-2 flex w-full items-center justify-between">
                 <h2 className="text-sm font-bold">Promotions</h2>
                 <Button
@@ -669,6 +652,54 @@ export function ItemModal({
                 </p>
               )}
             </section>
+
+            {/* Additional Details */}
+            <div className="space-y-4 p-4 mb-0">
+              <h4 className="text-base font-semibold">Item Details</h4>
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Calories</h4>
+                <p className="text-sm text-muted-foreground">
+                  {details.calories}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Description</h4>
+                <p className="text-sm text-muted-foreground">
+                  {details.detailDescription}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Ingredients</h4>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {details.ingredients.map((ingredient) => (
+                    <li key={ingredient}>{ingredient}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Features</h4>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {details.features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Specifics</h4>
+                <div className="grid gap-2 text-sm text-muted-foreground">
+                  {details.itemDetails.map((detail) => (
+                    <div key={detail.label} className="flex justify-between">
+                      <span>{detail.label}</span>
+                      <span className="text-foreground">{detail.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
